@@ -1,0 +1,16 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lottus-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: lottusdb
+      MYSQL_USER: lottus-devuser
+      MYSQL_PASSWORD: "40028922"
+    ports:
+      - "3306:3306"
+    volumes:
+      - lottus-mysql-data:/var/lib/mysql
+
+volumes:
+  lottus-mysql-data:
