@@ -1,6 +1,7 @@
 package com.br.lottus.mobile.usuario.controller;
 
 import com.br.lottus.mobile.common.entity.ApiResponse;
+import com.br.lottus.mobile.usuario.command.AlunoVinculadoResponse;
 import com.br.lottus.mobile.usuario.command.ChangePasswordCommand;
 import com.br.lottus.mobile.usuario.command.UpdateUsuarioCommand;
 import com.br.lottus.mobile.usuario.command.UsuarioResponse;
@@ -11,9 +12,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -68,5 +72,17 @@ public class UsuarioController {
             @Valid @RequestBody ChangePasswordCommand command) {
         usuarioService.changePassword(usuario.getId(), command);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me/alunos")
+    @Operation(summary = "Listar alunos vinculados", description = "Retorna os alunos vinculados ao responsavel autenticado com dados resumidos (turma, livros lidos, livro atual)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista retornada com sucesso (pode estar vazia)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Nao autenticado")
+    })
+    public ResponseEntity<ApiResponse<List<AlunoVinculadoResponse>>> listarAlunosVinculados(
+            @AuthenticationPrincipal Usuario usuario) {
+        List<AlunoVinculadoResponse> alunos = usuarioService.listarAlunosVinculados(usuario.getId());
+        return ResponseEntity.ok(ApiResponse.ok(alunos));
     }
 }
