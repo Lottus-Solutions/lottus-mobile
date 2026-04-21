@@ -69,7 +69,7 @@ public class AuthService {
         return buildAuthResponse(usuario);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse login(LoginCommand command) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(command.email(), command.senha())

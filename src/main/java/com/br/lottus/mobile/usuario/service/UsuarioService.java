@@ -1,7 +1,12 @@
 package com.br.lottus.mobile.usuario.service;
 
+import com.br.lottus.mobile.aluno.entity.Aluno;
 import com.br.lottus.mobile.auth.service.RefreshTokenService;
 import com.br.lottus.mobile.common.exception.BusinessException;
+import com.br.lottus.mobile.emprestimo.entity.Emprestimo;
+import com.br.lottus.mobile.emprestimo.entity.StatusEmprestimo;
+import com.br.lottus.mobile.emprestimo.repository.EmprestimoRepository;
+import com.br.lottus.mobile.usuario.command.AlunoVinculadoResponse;
 import com.br.lottus.mobile.usuario.command.ChangePasswordCommand;
 import com.br.lottus.mobile.usuario.command.UpdateUsuarioCommand;
 import com.br.lottus.mobile.usuario.command.UsuarioResponse;
@@ -17,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -25,13 +31,43 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioAlunoRepository usuarioAlunoRepository;
+    private final EmprestimoRepository emprestimoRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+
+    private static final List<StatusEmprestimo> STATUS_EM_LEITURA =
+            List.of(StatusEmprestimo.ATIVO, StatusEmprestimo.ATRASADO);
 
     @Transactional(readOnly = true)
     public UsuarioResponse getProfile(Long userId) {
         Usuario usuario = findById(userId);
         return toResponse(usuario);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlunoVinculadoResponse> listarAlunosVinculados(Long userId) {
+        return usuarioAlunoRepository.findByIdUsuarioId(userId).stream()
+                .map(UsuarioAluno::getAluno)
+                .filter(Objects::nonNull)
+                .map(this::toAlunoVinculadoResponse)
+                .toList();
+    }
+
+    private AlunoVinculadoResponse toAlunoVinculadoResponse(Aluno aluno) {
+        String livroAtual = emprestimoRepository
+                .findFirstByAlunoIdAndStatusEmprestimoInOrderByDataEmprestimoDesc(aluno.getId(), STATUS_EM_LEITURA)
+                .map(Emprestimo::getLivro)
+                .map(livro -> livro != null ? livro.getTitulo() : null)
+                .orElse(null);
+
+        return AlunoVinculadoResponse.builder()
+                .id(aluno.getId())
+                .nome(aluno.getNome())
+                .matricula(aluno.getMatricula())
+                .turma(aluno.getTurma() != null ? aluno.getTurma().getSerie() : null)
+                .qtdLivrosLidos(aluno.getQtdLivrosLidos())
+                .livroAtual(livroAtual)
+                .build();
     }
 
     @Transactional
