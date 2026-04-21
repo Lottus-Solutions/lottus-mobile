@@ -34,6 +34,9 @@ public class Emprestimo {
     @Column(name = "data_devolucao_prevista", nullable = false)
     private LocalDate dataDevolucaoPrevista;
 
+    @Column(name = "data_devolucao_efetiva")
+    private LocalDate dataDevolucaoEfetiva;
+
     @Column(name = "dias_atrasados", nullable = false)
     @Builder.Default
     private int diasAtrasados = 0;

@@ -1,0 +1,659 @@
+"title","labels","body"
+"[EPIC] Infraestrutura, documentacao e qualidade","type:epic|area:infra|priority:P0|track:shared","## Contexto
+Agrupa o setup inicial do projeto: build, CI, docker, Swagger, tratamento de erros, logging e convencoes. Base para qualquer feature funcionar de forma confiavel.
+
+## Escopo
+- Docker Compose para dev (MySQL + app).
+- GitHub Actions para build + testes.
+- Swagger/OpenAPI com autenticacao JWT documentada.
+- README do projeto.
+- ApiResponse / GlobalExceptionHandler padronizados.
+- Testes unitarios e de integracao dos fluxos principais.
+
+## Criterios de aceite
+- [ ] Todas as issues filhas desta epic estao concluidas.
+- [ ] Pipeline verde no main.
+- [ ] Documentacao minima suficiente para onboarding de novo dev.
+
+---
+**Epic:** `infra` | **Track:** `shared`"
+"[EPIC] Autenticacao e conta do pai","type:epic|area:auth|priority:P0|track:A","## Contexto
+O usuario principal do app mobile e o pai/responsavel. Precisamos de cadastro, login JWT, refresh, login Google (OAuth2), recuperacao de senha e gestao do proprio perfil.
+
+## Escopo
+- Entidade Usuario + migration.
+- Registro, login, refresh.
+- Login Google (OAuth2).
+- Esqueci minha senha / reset.
+- Perfil do pai (me).
+
+## Criterios de aceite
+- [ ] Todas as issues filhas concluidas.
+- [ ] Fluxo completo testavel via Swagger.
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"[EPIC] Vinculo pai - aluno","type:epic|area:vinculo|priority:P0|track:A","## Contexto
+O pai so pode visualizar dados de alunos vinculados a ele. Cada pai pode ter N filhos; o vinculo e criado explicitamente informando matricula (e um codigo de validacao do aluno, definido na modelagem do endpoint).
+
+## Escopo
+- Criar, listar e remover vinculos.
+- Filtro/aspect de autorizacao aplicavel em alunos, emprestimos e metas.
+
+## Criterios de aceite
+- [ ] Pai so enxerga dados de alunos vinculados.
+- [ ] Tentativa de acesso cruzado retorna 403.
+
+---
+**Epic:** `vinculo` | **Track:** `A`"
+"[EPIC] Catalogo de livros","type:epic|area:livros|priority:P1|track:B","## Contexto
+Catalogo de livros apenas para leitura (o pai nao cadastra livros, apenas registra a leitura de um livro ja existente para o filho). Independe dos demais tracks, pode rodar em paralelo.
+
+## Escopo
+- Entidade Livro completa (autor, sinopse, capa, categoria).
+- Listagem/pesquisa.
+- Detalhes.
+
+## Criterios de aceite
+- [ ] Endpoints GET /livros e GET /livros/{id} disponiveis.
+- [ ] Busca por titulo/autor funciona.
+
+---
+**Epic:** `livros` | **Track:** `B`"
+"[EPIC] Leituras (emprestimos) do aluno","type:epic|area:emprestimos|priority:P0|track:A","## Contexto
+Historico de leituras do aluno: cadastro de nova leitura (nao de novo livro), livro atual em leitura, conclusao/devolucao, historico completo. Usado tambem como base para progresso de metas.
+
+## Escopo
+- Modelagem revisada.
+- POST nova leitura.
+- Historico.
+- Livro atual.
+- Concluir leitura.
+
+## Criterios de aceite
+- [ ] Pai consegue registrar leitura para um filho vinculado.
+- [ ] Historico e livro atual carregam corretamente.
+
+---
+**Epic:** `emprestimos` | **Track:** `A`"
+"[EPIC] Metas de leitura","type:epic|area:metas|priority:P0|track:B","## Contexto
+O pai define metas para o filho (ex.: 'Ler 4 livros', 'Ler 1 livro de fantasia'). Cada meta tem tipo, titulo, duracao (inicio-fim) e forma de validacao (booleana 0/1 ou percentual sobre um valor alvo). Progresso pode ser atualizado manualmente ou automaticamente por integracao com emprestimos.
+
+## Escopo
+- Modelagem da entidade Meta.
+- CRUD de metas.
+- Integracao com emprestimos para progresso automatico.
+
+## Criterios de aceite
+- [ ] Pai cria, lista, atualiza e remove metas para filhos vinculados.
+- [ ] Progresso atualizado automaticamente quando emprestimo se encaixa na regra.
+
+---
+**Epic:** `metas` | **Track:** `B`"
+"chore(infra): validar docker-compose dev (MySQL + app) e application.yml","type:chore|area:infra|priority:P0|track:shared","## Contexto
+O projeto ja tem docker-compose.yml e application.yml no scaffold. Precisamos garantir que `docker compose up` sobe MySQL + app do zero e que perfis `dev` e `prod` estao corretos.
+
+## Escopo
+- Revisar docker-compose.yml (healthcheck do MySQL, volumes, variaveis).
+- Revisar application.yml / application-dev.yml / application-prod.yml.
+- Documentar variaveis de ambiente obrigatorias.
+
+## Criterios de aceite
+- [ ] `docker compose up --build` sobe o app do zero em maquina limpa.
+- [ ] Variaveis sensiveis (JWT secret, DB password) vem de env, nao hardcoded.
+- [ ] Flyway aplica todas as migrations na subida.
+
+---
+**Epic:** `infra` | **Track:** `shared`"
+"chore(infra): configurar GitHub Actions (build + test)","type:chore|area:infra|priority:P0|track:shared","## Contexto
+Ja existe um workflow inicial (commit f03c4fc). Revisar e garantir que build + testes rodam em PR para main e disparam status check obrigatorio.
+
+## Escopo
+- Workflow roda em push/PR para main.
+- Cacheia dependencias Maven.
+- Reporta falha em teste/compilacao.
+
+## Criterios de aceite
+- [ ] PR sem build verde nao pode ser mergeado (branch protection configurado).
+- [ ] Tempo total < 5 min em PR medio.
+
+---
+**Epic:** `infra` | **Track:** `shared`"
+"chore(infra): configurar Swagger/OpenAPI com autenticacao JWT","type:chore|area:infra|priority:P1|track:shared","## Contexto
+SwaggerConfig ja existe no scaffold. Completar para documentar JWT (Bearer), OAuth2 e todos os endpoints agrupados por tag.
+
+## Escopo
+- Security scheme JWT Bearer configurado.
+- Tag por modulo (auth, vinculo, alunos, livros, emprestimos, metas).
+- Exemplos de request/response onde faz sentido.
+
+## Criterios de aceite
+- [ ] `/swagger-ui.html` acessivel.
+- [ ] `Authorize` aceita JWT e o envia nos endpoints protegidos.
+
+---
+**Epic:** `infra` | **Track:** `shared`"
+"docs: README do projeto mobile (escopo, arquitetura, como rodar)","type:docs|area:infra|priority:P1|track:shared","## Contexto
+README atual e o default do Spring Initializr. Precisa explicar o escopo (API do app mobile do pai), relacao com `lottus-backend`, arquitetura em camadas e como rodar localmente.
+
+## Escopo
+- Visao geral e publico-alvo (pai/responsavel).
+- Arquitetura e dependencias principais.
+- Como rodar (docker + mvn).
+- Convencoes de branch/commit/PR (1 PR por issue).
+
+## Criterios de aceite
+- [ ] Novo dev consegue subir o ambiente seguindo so o README.
+
+---
+**Epic:** `infra` | **Track:** `shared`"
+"chore(infra): padronizar ApiResponse, GlobalExceptionHandler e validacao","type:chore|area:infra|priority:P1|track:shared","## Contexto
+Ja existem `ApiResponse`, `BusinessException` e `GlobalExceptionHandler`. Fechar o contrato para que todos os controllers retornem o mesmo envelope e erros de validacao (Bean Validation) sejam traduzidos consistentemente.
+
+## Escopo
+- Envelope `{ success, data, error: { code, message, details } }` unificado.
+- Handler para MethodArgumentNotValidException / ConstraintViolationException.
+- Codigos de erro por dominio (AUTH_*, VINCULO_*, EMPRESTIMO_*, META_*).
+
+## Criterios de aceite
+- [ ] Qualquer erro da API cai no handler global e retorna no formato padrao.
+- [ ] Documentado no Swagger.
+
+---
+**Epic:** `infra` | **Track:** `shared`"
+"feat(auth): entidade Usuario (pai) e migration revisadas","type:feature|area:auth|priority:P0|track:A","## Contexto
+Entidade `Usuario` ja existe no scaffold (usuario/entity). Revisar campos necessarios para pai: nome, email (unico), senha (hash), telefone, foto/avatar, provider (LOCAL/GOOGLE), created_at/updated_at, ativo.
+
+## Escopo
+- Revisar `Usuario.java` e `V3__create_usuarios.sql`.
+- Garantir unicidade de email.
+- Suportar usuarios vindos do OAuth2 (sem senha).
+
+## Criterios de aceite
+- [ ] Migration idempotente, nao quebra historico.
+- [ ] Testes unitarios do repositorio.
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"feat(auth): POST /auth/register - cadastro de pai","type:feature|area:auth|priority:P0|track:A","## Contexto
+Cadastro do pai/responsavel com email e senha.
+
+## Escopo
+- POST /auth/register com nome, email, senha.
+- Validacoes (email valido, senha forte, email unico).
+- Hash de senha via PasswordEncoder ja existente.
+- Retorna 201 + usuario basico (sem senha).
+
+## Criterios de aceite
+- [ ] Email duplicado retorna 409 com codigo AUTH_EMAIL_JA_CADASTRADO.
+- [ ] Senha nunca volta na resposta.
+- [ ] Teste de integracao cobrindo sucesso e erro.
+
+## Depende de
+- feat(auth): entidade Usuario (pai) e migration revisadas
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"feat(auth): POST /auth/login - autenticacao JWT","type:feature|area:auth|priority:P0|track:A","## Contexto
+Autenticacao por email/senha retornando access token JWT e refresh token.
+
+## Escopo
+- POST /auth/login com email + senha.
+- Retorna access token (curta duracao) + refresh token.
+- Persistencia de refresh token (tabela ja existe).
+
+## Criterios de aceite
+- [ ] Credencial invalida retorna 401.
+- [ ] Access token contem sub (user id) e expiracao.
+- [ ] Teste de integracao cobrindo sucesso e credenciais invalidas.
+
+## Depende de
+- feat(auth): POST /auth/register - cadastro de pai
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"feat(auth): POST /auth/refresh - rotacao de refresh token","type:feature|area:auth|priority:P0|track:A","## Contexto
+Renovacao do access token via refresh token com rotacao.
+
+## Escopo
+- POST /auth/refresh com refresh token.
+- Invalida token antigo e emite par novo (rotacao).
+- Revoga todos os refresh tokens do usuario em caso de reuso detectado.
+
+## Criterios de aceite
+- [ ] Refresh token expirado/invalido retorna 401.
+- [ ] Teste cobre rotacao e deteccao de reuso.
+
+## Depende de
+- feat(auth): POST /auth/login - autenticacao JWT
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"feat(auth): login com Google (OAuth2)","type:feature|area:auth|priority:P1|track:A","## Contexto
+Ja ha scaffold em `config/oauth2/` (CustomOidcUserService, OAuth2AuthenticationSuccessHandler). Finalizar fluxo para o mobile obter JWT apos login Google.
+
+## Escopo
+- Endpoint que recebe id_token Google do app e emite JWT/refresh.
+- Criar `Usuario` com provider=GOOGLE se nao existir.
+- Vincular a conta existente se email ja cadastrado (com aviso).
+
+## Criterios de aceite
+- [ ] App mobile troca id_token Google por par JWT/refresh.
+- [ ] Documentado no Swagger.
+
+## Notas tecnicas
+- Nao usar fluxo redirect-based (app mobile); trocar id_token direto.
+
+## Depende de
+- feat(auth): POST /auth/login - autenticacao JWT
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"feat(auth): recuperacao de senha (forgot + reset)","type:feature|area:auth|priority:P1|track:A","## Contexto
+Fluxo de esqueci-minha-senha: pai informa email, recebe token (por email), usa token para definir nova senha.
+
+## Escopo
+- POST /auth/forgot-password (email).
+- POST /auth/reset-password (token + nova senha).
+- Token com expiracao curta (ex. 30 min).
+- Envio de email (pode ser log em dev).
+
+## Criterios de aceite
+- [ ] Token usado nao pode ser reusado.
+- [ ] Email inexistente responde 200 generico (anti-enumeracao).
+- [ ] Teste cobre sucesso, token expirado e reuso.
+
+## Depende de
+- feat(auth): POST /auth/login - autenticacao JWT
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"feat(usuarios): GET e PUT /usuarios/me - perfil do pai","type:feature|area:auth|priority:P1|track:A","## Contexto
+Pai visualiza e edita o proprio perfil (nome, telefone, avatar).
+
+## Escopo
+- GET /usuarios/me (usuario autenticado).
+- PUT /usuarios/me (campos editaveis).
+- Endpoint para alterar senha (requer senha atual).
+
+## Criterios de aceite
+- [ ] Email nao e alteravel (ou requer fluxo proprio).
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(auth): POST /auth/login - autenticacao JWT
+
+---
+**Epic:** `auth` | **Track:** `A`"
+"feat(vinculo): POST /usuarios/me/alunos - vincular aluno","type:feature|area:vinculo|priority:P0|track:A","## Contexto
+Pai vincula um aluno ao proprio perfil informando matricula + um codigo/senha de validacao (combinado no modelo: pode ser codigo gerado pela escola). A tabela `usuario_aluno` ja existe.
+
+## Escopo
+- POST /usuarios/me/alunos com matricula + codigo de validacao.
+- Valida que o aluno existe e que o codigo confere.
+- Impede vinculo duplicado.
+
+## Criterios de aceite
+- [ ] Retorna 201 com dados basicos do aluno vinculado.
+- [ ] Codigo invalido -> 403 VINCULO_CODIGO_INVALIDO.
+- [ ] Aluno inexistente -> 404.
+
+## Notas tecnicas
+- Definir fonte do 'codigo de validacao' na issue (sugerido: campo novo em `alunos` populado pela escola ou gerado no momento do cadastro do aluno no backend legado).
+
+## Depende de
+- feat(auth): POST /auth/login - autenticacao JWT
+
+---
+**Epic:** `vinculo` | **Track:** `A`"
+"feat(vinculo): GET /usuarios/me/alunos - listar filhos vinculados","type:feature|area:vinculo|priority:P0|track:A","## Contexto
+Lista alunos vinculados ao pai autenticado, com dados resumidos.
+
+## Escopo
+- GET /usuarios/me/alunos.
+- Retorna id, nome, matricula, turma (se relevante), qtdLivrosLidos, livroAtual (titulo).
+
+## Criterios de aceite
+- [ ] So retorna alunos do pai logado.
+- [ ] Teste cobrindo pai sem filhos (lista vazia).
+
+## Depende de
+- feat(vinculo): POST /usuarios/me/alunos - vincular aluno
+
+---
+**Epic:** `vinculo` | **Track:** `A`"
+"feat(vinculo): DELETE /usuarios/me/alunos/{alunoId} - desvincular","type:feature|area:vinculo|priority:P2|track:A","## Contexto
+Pai remove o vinculo de um aluno (nao deleta o aluno, so o relacionamento).
+
+## Escopo
+- DELETE /usuarios/me/alunos/{alunoId}.
+- 404 se nao existe vinculo.
+
+## Criterios de aceite
+- [ ] Metas criadas pelo pai para esse aluno ficam inacessiveis (definir regra na issue).
+
+## Depende de
+- feat(vinculo): POST /usuarios/me/alunos - vincular aluno
+
+---
+**Epic:** `vinculo` | **Track:** `A`"
+"feat(autorizacao): garantir que pai so acessa dados de alunos vinculados","type:feature|area:vinculo|priority:P0|track:A","## Contexto
+Regra transversal: em qualquer endpoint que receba alunoId ou emprestimoId ou metaId, conferir que o recurso pertence a um aluno vinculado ao pai autenticado.
+
+## Escopo
+- Service helper `AlunoVerificationService` (ja existe no scaffold) - usar/estender.
+- Aplicar em controllers de alunos, emprestimos, metas.
+- 403 consistente via GlobalExceptionHandler.
+
+## Criterios de aceite
+- [ ] Teste de integracao: pai X tenta acessar aluno de pai Y -> 403.
+- [ ] Aplicado em todos os endpoints que acessam dados de aluno.
+
+## Depende de
+- feat(vinculo): POST /usuarios/me/alunos - vincular aluno
+- chore(infra): padronizar ApiResponse, GlobalExceptionHandler e validacao
+
+---
+**Epic:** `vinculo` | **Track:** `A`"
+"feat(livros): entidade Livro completa + migration","type:feature|area:livros|priority:P1|track:B","## Contexto
+A entidade `Livro` do scaffold tem apenas id e titulo. Precisa de autor, sinopse, capa (url), categoria, isbn, total de paginas. A migration V5 do lottus-backend serve como referencia.
+
+## Escopo
+- Expandir `Livro.java`.
+- Criar migration (proxima versao Flyway).
+- Repository com busca por titulo/autor.
+
+## Criterios de aceite
+- [ ] Migration aplica do zero e e idempotente.
+- [ ] Teste do repository para busca.
+
+---
+**Epic:** `livros` | **Track:** `B`"
+"feat(livros): GET /livros - listagem paginada com busca","type:feature|area:livros|priority:P1|track:B","## Contexto
+Listagem do catalogo para o pai escolher livro ao registrar nova leitura.
+
+## Escopo
+- GET /livros?search=&categoria=&page=&size=.
+- Paginacao padrao Spring.
+- Ordenacao por titulo.
+
+## Criterios de aceite
+- [ ] Busca case-insensitive por titulo/autor.
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(livros): entidade Livro completa + migration
+
+---
+**Epic:** `livros` | **Track:** `B`"
+"feat(livros): GET /livros/{id} - detalhes","type:feature|area:livros|priority:P2|track:B","## Contexto
+Pagina de detalhes do livro no app.
+
+## Escopo
+- GET /livros/{id}.
+- Retorna todos os campos + categoria.
+
+## Criterios de aceite
+- [ ] 404 quando nao existe.
+
+## Depende de
+- feat(livros): entidade Livro completa + migration
+
+---
+**Epic:** `livros` | **Track:** `B`"
+"feat(emprestimos): entidade e migration revisadas","type:feature|area:emprestimos|priority:P0|track:A","## Contexto
+Entidade `Emprestimo` ja existe com id, aluno, livro, dataEmprestimo, dataDevolucaoPrevista, diasAtrasados, statusEmprestimo. Avaliar se precisa: dataDevolucaoReal, observacoes, paginasLidas.
+
+## Escopo
+- Revisar `Emprestimo.java`.
+- Criar migration para emprestimos no mobile (nao existe V6 no mobile, so no backend legado).
+- Repository com consultas por aluno e por status.
+
+## Criterios de aceite
+- [ ] Migration idempotente aplicada.
+- [ ] Teste do repository (historico do aluno, leitura atual).
+
+## Depende de
+- feat(livros): entidade Livro completa + migration
+
+---
+**Epic:** `emprestimos` | **Track:** `A`"
+"feat(emprestimos): POST /alunos/{id}/emprestimos - cadastrar nova leitura","type:feature|area:emprestimos|priority:P0|track:A","## Contexto
+Pai registra que o filho comecou a ler um livro. Cria emprestimo com status ATIVO para um livro existente (nao cria livro novo).
+
+## Escopo
+- POST /alunos/{id}/emprestimos com livroId + dataDevolucaoPrevista.
+- Valida autorizacao (filho vinculado).
+- Impede criar novo emprestimo se ja existe um ATIVO para o mesmo aluno (regra a confirmar).
+
+## Criterios de aceite
+- [ ] 403 se aluno nao pertence ao pai.
+- [ ] 404 se livro nao existe.
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(emprestimos): entidade e migration revisadas
+- feat(autorizacao): garantir que pai so acessa dados de alunos vinculados
+
+---
+**Epic:** `emprestimos` | **Track:** `A`"
+"feat(emprestimos): GET /alunos/{id}/emprestimos - historico","type:feature|area:emprestimos|priority:P0|track:A","## Contexto
+Historico completo de leituras do aluno com filtros.
+
+## Escopo
+- GET /alunos/{id}/emprestimos?status=&periodoInicio=&periodoFim=&page=&size=.
+- Ordenacao por dataEmprestimo desc.
+- Autorizacao por vinculo.
+
+## Criterios de aceite
+- [ ] Paginado.
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(emprestimos): entidade e migration revisadas
+- feat(autorizacao): garantir que pai so acessa dados de alunos vinculados
+
+---
+**Epic:** `emprestimos` | **Track:** `A`"
+"feat(emprestimos): GET /alunos/{id}/emprestimos/atual - livro em leitura","type:feature|area:emprestimos|priority:P1|track:A","## Contexto
+Endpoint especifico para o card de 'livro atual' no dashboard.
+
+## Escopo
+- GET /alunos/{id}/emprestimos/atual.
+- Retorna emprestimo ATIVO mais recente ou 204.
+
+## Criterios de aceite
+- [ ] 204 quando aluno nao tem leitura ativa.
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(emprestimos): entidade e migration revisadas
+
+---
+**Epic:** `emprestimos` | **Track:** `A`"
+"feat(emprestimos): PATCH /emprestimos/{id}/concluir - concluir leitura","type:feature|area:emprestimos|priority:P0|track:A","## Contexto
+Marca leitura como concluida (devolvida), atualiza qtdLivrosLidos do aluno e dispara hook de progresso de metas.
+
+## Escopo
+- PATCH /emprestimos/{id}/concluir com dataDevolucaoReal (default hoje).
+- Atualiza status para CONCLUIDO.
+- Incrementa `aluno.qtdLivrosLidos`.
+- Publica evento interno para metas.
+
+## Criterios de aceite
+- [ ] Teste: apos concluir, qtdLivrosLidos do aluno aumenta.
+- [ ] Teste: evento publicado (mock).
+- [ ] Idempotencia: concluir duas vezes retorna 409.
+
+## Depende de
+- feat(emprestimos): POST /alunos/{id}/emprestimos - cadastrar nova leitura
+
+---
+**Epic:** `emprestimos` | **Track:** `A`"
+"feat(metas): modelagem da entidade Meta + migration","type:feature|area:metas|priority:P0|track:B","## Contexto
+Entidade Meta: id, alunoId, criadoPorUsuarioId (pai), titulo, descricao (opcional), tipoMeta (QUANTIDADE_LIVROS, GENERO, PAGINAS, LIVRO_ESPECIFICO), tipoValidacao (BOOLEANA, PERCENTUAL), valorAlvo (nullable quando booleana), valorAtual, dataInicio, dataFim, status (ATIVA, CONCLUIDA, CANCELADA), created_at/updated_at.
+
+## Escopo
+- Entidade + enums.
+- Migration Flyway.
+- Repository.
+
+## Criterios de aceite
+- [ ] Migration aplicada.
+- [ ] Testes unitarios do repository.
+
+---
+**Epic:** `metas` | **Track:** `B`"
+"feat(metas): POST /alunos/{id}/metas - criar meta","type:feature|area:metas|priority:P0|track:B","## Contexto
+Pai cria meta para filho vinculado. Informa tipo, titulo, duracao, forma de validacao.
+
+## Escopo
+- POST /alunos/{id}/metas.
+- Validar autorizacao por vinculo.
+- Validar consistencia (BOOLEANA nao exige valorAlvo; PERCENTUAL exige >0).
+
+## Criterios de aceite
+- [ ] 403 para aluno nao vinculado.
+- [ ] 400 quando payload inconsistente.
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(metas): modelagem da entidade Meta + migration
+- feat(autorizacao): garantir que pai so acessa dados de alunos vinculados
+
+---
+**Epic:** `metas` | **Track:** `B`"
+"feat(metas): GET /alunos/{id}/metas - listar metas com progresso","type:feature|area:metas|priority:P0|track:B","## Contexto
+Lista metas de um aluno, retornando progresso (valorAtual/valorAlvo) e status.
+
+## Escopo
+- GET /alunos/{id}/metas?status=.
+- Retorna progresso percentual computado quando tipoValidacao=PERCENTUAL.
+
+## Criterios de aceite
+- [ ] Aluno sem meta -> lista vazia.
+- [ ] Autorizacao por vinculo aplicada.
+
+## Depende de
+- feat(metas): POST /alunos/{id}/metas - criar meta
+
+---
+**Epic:** `metas` | **Track:** `B`"
+"feat(metas): PATCH /metas/{id} - atualizar progresso/concluir","type:feature|area:metas|priority:P1|track:B","## Contexto
+Pai atualiza progresso manualmente ou muda status.
+
+## Escopo
+- PATCH /metas/{id} com valorAtual e/ou status.
+- Se valorAtual>=valorAlvo e status!=CONCLUIDA, mover para CONCLUIDA automaticamente.
+
+## Criterios de aceite
+- [ ] Autorizacao por vinculo.
+- [ ] Teste da transicao automatica.
+
+## Depende de
+- feat(metas): POST /alunos/{id}/metas - criar meta
+
+---
+**Epic:** `metas` | **Track:** `B`"
+"feat(metas): DELETE /metas/{id} - remover meta","type:feature|area:metas|priority:P2|track:B","## Contexto
+Pai pode remover meta (hard delete ou soft, a decidir na issue).
+
+## Escopo
+- DELETE /metas/{id}.
+- Autorizacao por vinculo.
+
+## Criterios de aceite
+- [ ] 404 quando nao existe.
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(metas): POST /alunos/{id}/metas - criar meta
+
+---
+**Epic:** `metas` | **Track:** `B`"
+"feat(metas): atualizar progresso automaticamente em emprestimos","type:feature|area:metas|priority:P1|track:B","## Contexto
+Quando um emprestimo e concluido, metas ativas compativeis (tipo, periodo, filtros) do aluno devem ter valorAtual incrementado.
+
+## Escopo
+- Listener do evento de conclusao de emprestimo.
+- Para tipoMeta=QUANTIDADE_LIVROS: +1 em metas ativas do aluno dentro do periodo.
+- Para tipoMeta=GENERO: +1 se categoria do livro bate.
+- Para tipoMeta=PAGINAS: soma paginas do livro.
+- Para tipoMeta=LIVRO_ESPECIFICO: marca como concluida (booleana).
+
+## Criterios de aceite
+- [ ] Teste ponta-a-ponta: criar meta, concluir emprestimo, progresso atualizado.
+- [ ] Funciona com metas PERCENTUAL e BOOLEANA.
+
+## Depende de
+- feat(emprestimos): PATCH /emprestimos/{id}/concluir - concluir leitura
+- feat(metas): PATCH /metas/{id} - atualizar progresso/concluir
+
+---
+**Epic:** `metas` | **Track:** `B`"
+"feat(alunos): GET /alunos/{id} - perfil do aluno","type:feature|area:alunos|priority:P1|track:A","## Contexto
+Perfil do aluno na visao do pai (apenas leitura, sem dados de turma/escola sensiveis).
+
+## Escopo
+- GET /alunos/{id}.
+- Retorna id, nome, matricula, qtdLivrosLidos, qtdBonus (se fizer sentido), livroAtual.
+
+## Criterios de aceite
+- [ ] Autorizacao por vinculo.
+- [ ] Teste de integracao.
+
+## Depende de
+- feat(autorizacao): garantir que pai so acessa dados de alunos vinculados
+
+---
+**Epic:** `alunos` | **Track:** `A`"
+"feat(alunos): GET /alunos/{id}/dashboard - resumo","type:feature|area:alunos|priority:P1|track:A","## Contexto
+Endpoint de dashboard otimizado para a tela inicial do app (evita multiplas chamadas).
+
+## Escopo
+- GET /alunos/{id}/dashboard.
+- Retorna: livroAtual, totalLivrosLidos, metasAtivas (resumo com progresso), ultimasLeituras (3).
+
+## Criterios de aceite
+- [ ] Autorizacao por vinculo.
+- [ ] Cache opcional (pode ser iteracao futura).
+
+## Depende de
+- feat(emprestimos): GET /alunos/{id}/emprestimos/atual - livro em leitura
+- feat(metas): GET /alunos/{id}/metas - listar metas com progresso
+
+---
+**Epic:** `alunos` | **Track:** `A`"
+"test: testes unitarios de services (auth, vinculo, emprestimo, meta)","type:test|area:infra|priority:P1|track:shared","## Contexto
+Cobertura minima de testes unitarios para services criticos.
+
+## Escopo
+- AuthService (login, register, refresh).
+- UsuarioAlunoService (vinculo).
+- EmprestimoService (criar, concluir).
+- MetaService (criar, atualizar progresso).
+
+## Criterios de aceite
+- [ ] >= 70% de cobertura nas classes listadas.
+- [ ] Testes rodam em CI.
+
+---
+**Epic:** `infra` | **Track:** `shared`"
+"test: testes de integracao de controllers principais","type:test|area:infra|priority:P1|track:shared","## Contexto
+@SpringBootTest + Testcontainers (MySQL) para fluxos ponta-a-ponta.
+
+## Escopo
+- AuthController (register/login/refresh).
+- UsuarioAlunoController (vinculo).
+- EmprestimoController (criar/listar/concluir).
+- MetaController (criar/listar/atualizar).
+
+## Criterios de aceite
+- [ ] Testes rodam em CI (cache de imagem docker).
+- [ ] Cobrem autorizacao (pai X tentando acessar filho de Y).
+
+## Depende de
+- chore(infra): configurar GitHub Actions (build + test)
+
+---
+**Epic:** `infra` | **Track:** `shared`"
