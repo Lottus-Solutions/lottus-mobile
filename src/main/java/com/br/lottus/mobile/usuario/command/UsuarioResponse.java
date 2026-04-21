@@ -19,6 +19,9 @@ public record UsuarioResponse(
         @Schema(description = "Email")
         String email,
 
+        @Schema(description = "Telefone de contato")
+        String telefone,
+
         @Schema(description = "Data de registro")
         LocalDateTime dtRegistro,
 

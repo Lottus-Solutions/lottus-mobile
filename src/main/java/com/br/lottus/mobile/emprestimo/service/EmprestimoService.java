@@ -10,6 +10,7 @@ import com.br.lottus.mobile.emprestimo.entity.StatusEmprestimo;
 import com.br.lottus.mobile.emprestimo.repository.EmprestimoRepository;
 import com.br.lottus.mobile.livro.entity.Livro;
 import com.br.lottus.mobile.livro.repository.LivroRepository;
+import com.br.lottus.mobile.meta.service.MetaService;
 import com.br.lottus.mobile.usuario.repository.UsuarioAlunoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class EmprestimoService {
     private final AlunoRepository alunoRepository;
     private final LivroRepository livroRepository;
     private final UsuarioAlunoRepository usuarioAlunoRepository;
+    private final MetaService metaService;
 
     @Transactional
     public EmprestimoResponse registrarLeitura(Long usuarioId, String matricula, CreateEmprestimoCommand command) {
@@ -97,6 +99,8 @@ public class EmprestimoService {
 
         Emprestimo salvo = emprestimoRepository.save(emprestimo);
         log.info("Leitura concluida id={} aluno={}", salvo.getId(), aluno.getMatricula());
+
+        metaService.registrarLeituraConcluida(aluno, salvo.getLivro(), salvo.getDataDevolucaoEfetiva());
 
         return EmprestimoResponse.from(salvo);
     }
