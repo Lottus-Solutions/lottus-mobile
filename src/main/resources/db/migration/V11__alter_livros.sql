@@ -1,0 +1,7 @@
+ALTER TABLE livros ADD COLUMN autor VARCHAR(255);
+ALTER TABLE livros ADD COLUMN sinopse TEXT;
+ALTER TABLE livros ADD COLUMN categoria VARCHAR(255);
+ALTER TABLE livros ADD COLUMN isbn VARCHAR(20);
+ALTER TABLE livros ADD COLUMN total_paginas INT;
+
+ALTER TABLE livros ADD CONSTRAINT uk_livro_isbn UNIQUE (isbn);
