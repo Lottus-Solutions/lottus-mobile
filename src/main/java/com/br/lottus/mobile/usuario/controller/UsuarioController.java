@@ -103,4 +103,14 @@ public class UsuarioController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
+
+    @DeleteMapping("/me/alunos/{alunoId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Desvincular um aluno", description = "Remove o vínculo entre o pai/responsável logado e o aluno informado.")
+    public void desvincularAluno(
+            @AuthenticationPrincipal Usuario usuario,
+            @PathVariable Long alunoId
+    ) {
+        usuarioService.desvincularAluno(usuario.getId(), alunoId);
+    }
 }

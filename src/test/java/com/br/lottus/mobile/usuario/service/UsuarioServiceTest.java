@@ -7,6 +7,8 @@ import com.br.lottus.mobile.common.exception.BusinessException;
 import com.br.lottus.mobile.emprestimo.entity.Emprestimo;
 import com.br.lottus.mobile.emprestimo.repository.EmprestimoRepository;
 import com.br.lottus.mobile.livro.entity.Livro;
+import com.br.lottus.mobile.meta.entity.StatusMeta;
+import com.br.lottus.mobile.meta.repository.MetaRepository;
 import com.br.lottus.mobile.usuario.command.AlunoVinculadoResponse;
 import com.br.lottus.mobile.usuario.command.ChangePasswordCommand;
 import com.br.lottus.mobile.usuario.command.UpdateUsuarioCommand;
@@ -30,10 +32,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UsuarioServiceTest {
@@ -50,12 +53,15 @@ public class UsuarioServiceTest {
     private RefreshTokenService refreshTokenService;
     @Mock
     private AlunoRepository alunoRepository;
+    @Mock
+    private MetaRepository metaRepository;
 
     @InjectMocks
     private UsuarioService usuarioService;
 
     private Usuario usuario;
     private Long userId = 1L;
+    private Long alunoId = 2L;
 
     @BeforeEach
     void setUp() {
@@ -205,6 +211,47 @@ public class UsuarioServiceTest {
             // matches da nova senha também retornará true (indicando que é igual)
 
             assertThrows(BusinessException.class, () -> usuarioService.changePassword(userId, command));
+        }
+    }
+
+    @Nested
+    @DisplayName("Testes de Desvínculo de Aluno")
+    class DesvinculoTests {
+
+        @Test
+        @DisplayName("Deve desvincular aluno e arquivar metas com sucesso")
+        void deveDesvincularAlunoComSucesso() {
+            // Arrange
+            Long usuarioId = 1L;
+            Long alunoId = 2L;
+
+            // Simula que o vínculo foi encontrado
+            UsuarioAluno vinculoFake = new UsuarioAluno();
+            when(usuarioAlunoRepository.findById(any(UsuarioAlunoId.class)))
+                    .thenReturn(Optional.of(vinculoFake));
+
+            // Act
+            usuarioService.desvincularAluno(usuarioId, alunoId);
+
+            // Assert
+            verify(metaRepository).arquivarMetasPaiAluno(eq(usuarioId), eq(alunoId), any(), any());
+            verify(usuarioAlunoRepository).deleteById(any(UsuarioAlunoId.class));
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando o vínculo não existe")
+        void deveLancarExcecaoQuandoVinculoNaoExiste() {
+            // Arrange
+            when(usuarioAlunoRepository.findById(any(UsuarioAlunoId.class)))
+                    .thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThrows(BusinessException.class, () -> {
+                usuarioService.desvincularAluno(1L, 2L);
+            });
+
+            // Mockito não reclamará de "unnecessary stubbing" aqui
+            // pois não definimos nenhum when() para o metaRepository neste cenário
         }
     }
 }

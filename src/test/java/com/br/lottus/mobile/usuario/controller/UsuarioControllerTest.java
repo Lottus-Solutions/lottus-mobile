@@ -1,6 +1,7 @@
 package com.br.lottus.mobile.usuario.controller;
 
 import com.br.lottus.mobile.aluno.entity.Aluno;
+import com.br.lottus.mobile.common.exception.BusinessException;
 import com.br.lottus.mobile.config.security.JwtAuthenticationFilter;
 import com.br.lottus.mobile.config.security.JwtService;
 import com.br.lottus.mobile.usuario.command.ChangePasswordCommand;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -157,5 +159,34 @@ public class UsuarioControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.matricula").value(matricula))
                 .andExpect(jsonPath("$.data.vinculado").value(true));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 204 quando o desvínculo for bem sucedido")
+    void deveRetornar204AoDesvincularComSucesso() throws Exception {
+        Long alunoId = 1L;
+
+        doNothing().when(usuarioService).desvincularAluno(anyLong(), anyLong());
+
+        mockMvc.perform(delete("/api/usuarios/me/alunos/{alunoId}", alunoId)
+                        .with(user(usuarioMock))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 404 quando o vínculo não existir")
+    void deveRetornar404QuandoVinculoNaoEncontrado() throws Exception {
+        Long alunoId = 99L;
+
+        doThrow(new BusinessException("Vínculo não encontrado", HttpStatus.NOT_FOUND))
+                .when(usuarioService).desvincularAluno(anyLong(), anyLong());
+
+        mockMvc.perform(delete("/api/usuarios/me/alunos/{alunoId}", alunoId)
+                        .with(user(usuarioMock))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 }

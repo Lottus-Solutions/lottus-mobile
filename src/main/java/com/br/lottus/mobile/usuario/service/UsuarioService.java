@@ -7,6 +7,8 @@ import com.br.lottus.mobile.common.exception.BusinessException;
 import com.br.lottus.mobile.emprestimo.entity.Emprestimo;
 import com.br.lottus.mobile.emprestimo.entity.StatusEmprestimo;
 import com.br.lottus.mobile.emprestimo.repository.EmprestimoRepository;
+import com.br.lottus.mobile.meta.entity.StatusMeta;
+import com.br.lottus.mobile.meta.repository.MetaRepository;
 import com.br.lottus.mobile.usuario.command.AlunoVinculadoResponse;
 import com.br.lottus.mobile.usuario.command.ChangePasswordCommand;
 import com.br.lottus.mobile.usuario.command.UpdateUsuarioCommand;
@@ -37,6 +39,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final AlunoRepository alunoRepository;
+    private final MetaRepository metaRepository;
 
     private static final List<StatusEmprestimo> STATUS_EM_LEITURA =
             List.of(StatusEmprestimo.ATIVO, StatusEmprestimo.ATRASADO);
@@ -157,5 +160,21 @@ public class UsuarioService {
         usuarioAlunoRepository.save(novoVinculo);
 
         return aluno;
+    }
+
+    @Transactional
+    public void desvincularAluno(Long usuarioId, Long alunoId) {
+        UsuarioAlunoId idComposto = new UsuarioAlunoId(usuarioId, alunoId);
+        UsuarioAluno vinculo = usuarioAlunoRepository.findById(idComposto)
+                .orElseThrow(() -> new BusinessException("Vínculo não encontrado", HttpStatus.NOT_FOUND));
+
+        metaRepository.arquivarMetasPaiAluno(
+                usuarioId,
+                alunoId,
+                StatusMeta.ARQUIVADA,
+                StatusMeta.CONCLUIDA
+        );
+
+        usuarioAlunoRepository.deleteById(idComposto);
     }
 }
