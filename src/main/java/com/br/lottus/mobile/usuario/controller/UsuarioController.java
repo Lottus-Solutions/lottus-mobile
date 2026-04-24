@@ -1,5 +1,7 @@
 package com.br.lottus.mobile.usuario.controller;
 
+import com.br.lottus.mobile.aluno.command.AlunoResponse;
+import com.br.lottus.mobile.aluno.entity.Aluno;
 import com.br.lottus.mobile.common.entity.ApiResponse;
 import com.br.lottus.mobile.usuario.command.AlunoVinculadoResponse;
 import com.br.lottus.mobile.usuario.command.ChangePasswordCommand;
@@ -12,7 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -84,5 +86,21 @@ public class UsuarioController {
             @AuthenticationPrincipal Usuario usuario) {
         List<AlunoVinculadoResponse> alunos = usuarioService.listarAlunosVinculados(usuario.getId());
         return ResponseEntity.ok(ApiResponse.ok(alunos));
+    }
+
+    @PostMapping("/me/alunos/{matricula}")
+    @Operation(summary = "Vincular aluno ao responsável", description = "Vincula o responsável a um aluno e retorna os dados do aluno")
+    public ResponseEntity<ApiResponse<AlunoResponse>> vincularAluno(@PathVariable String matricula,
+                                                                    @AuthenticationPrincipal Usuario usuarioLogado) {
+        Aluno aluno = usuarioService.vincularAluno(usuarioLogado.getId(), matricula);
+
+        AlunoResponse response = AlunoResponse.builder()
+                .matricula(aluno.getMatricula())
+                .nome(aluno.getNome())
+                .serie(aluno.getNome())
+                .vinculado(true)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
 }

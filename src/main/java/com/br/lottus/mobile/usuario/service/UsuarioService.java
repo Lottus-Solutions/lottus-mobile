@@ -1,6 +1,7 @@
 package com.br.lottus.mobile.usuario.service;
 
 import com.br.lottus.mobile.aluno.entity.Aluno;
+import com.br.lottus.mobile.aluno.repository.AlunoRepository;
 import com.br.lottus.mobile.auth.service.RefreshTokenService;
 import com.br.lottus.mobile.common.exception.BusinessException;
 import com.br.lottus.mobile.emprestimo.entity.Emprestimo;
@@ -12,6 +13,7 @@ import com.br.lottus.mobile.usuario.command.UpdateUsuarioCommand;
 import com.br.lottus.mobile.usuario.command.UsuarioResponse;
 import com.br.lottus.mobile.usuario.entity.Usuario;
 import com.br.lottus.mobile.usuario.entity.UsuarioAluno;
+import com.br.lottus.mobile.usuario.entity.UsuarioAlunoId;
 import com.br.lottus.mobile.usuario.repository.UsuarioAlunoRepository;
 import com.br.lottus.mobile.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class UsuarioService {
     private final EmprestimoRepository emprestimoRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final AlunoRepository alunoRepository;
 
     private static final List<StatusEmprestimo> STATUS_EM_LEITURA =
             List.of(StatusEmprestimo.ATIVO, StatusEmprestimo.ATRASADO);
@@ -130,5 +133,29 @@ public class UsuarioService {
                 .idAvatar(usuario.getIdAvatar())
                 .matriculasAlunos(matriculas)
                 .build();
+    }
+
+    @Transactional
+    public Aluno vincularAluno(Long usuarioId, String matricula) {
+        Aluno aluno = alunoRepository.findByMatricula(matricula)
+                .orElseThrow(() -> new BusinessException("Aluno não encontrado", HttpStatus.NOT_FOUND));
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new BusinessException("Usuário não encontrado", HttpStatus.NOT_FOUND));
+
+        UsuarioAlunoId idComposto = new UsuarioAlunoId(usuarioId, aluno.getId());
+        if (usuarioAlunoRepository.existsById(idComposto)) {
+            throw new BusinessException("Aluno já vinculado a este perfil", HttpStatus.CONFLICT);
+        }
+
+        UsuarioAluno novoVinculo = UsuarioAluno.builder()
+                .id(idComposto)
+                .usuario(usuario)
+                .aluno(aluno)
+                .build();
+
+        usuarioAlunoRepository.save(novoVinculo);
+
+        return aluno;
     }
 }
