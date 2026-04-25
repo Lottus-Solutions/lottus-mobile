@@ -158,7 +158,8 @@ public class MetaService {
         for (Meta meta : candidatas) {
             if (!encaixaNaRegra(meta, livro)) continue;
 
-            int novoValor = meta.getValorAtual() + 1;
+            int incremento = calcularIncremento(meta, livro);
+            int novoValor = meta.getValorAtual() + incremento;
             if (meta.getTipoValidacao() == TipoValidacaoMeta.BOOLEAN) {
                 novoValor = 1;
             }
@@ -179,8 +180,28 @@ public class MetaService {
                 if (meta.getFiltroValor() == null || livro == null || livro.getTitulo() == null) yield false;
                 yield livro.getTitulo().toLowerCase().contains(meta.getFiltroValor().toLowerCase());
             }
+            case GENERO -> {
+                if (meta.getFiltroValor() == null || livro == null || livro.getCategoria() == null) yield false;
+                yield livro.getCategoria().equalsIgnoreCase(meta.getFiltroValor());
+            }
+            case PAGINAS -> livro != null && livro.getTotalPaginas() != null && livro.getTotalPaginas() > 0;
+            case LIVRO_ESPECIFICO -> {
+                if (meta.getFiltroValor() == null || livro == null || livro.getId() == null) yield false;
+                try {
+                    yield Long.parseLong(meta.getFiltroValor().trim()) == livro.getId();
+                } catch (NumberFormatException e) {
+                    yield false;
+                }
+            }
             case CUSTOM -> false;
         };
+    }
+
+    private int calcularIncremento(Meta meta, Livro livro) {
+        if (meta.getTipo() == TipoMeta.PAGINAS && livro != null && livro.getTotalPaginas() != null) {
+            return livro.getTotalPaginas();
+        }
+        return 1;
     }
 
     private void revalidarStatus(Meta meta) {
@@ -215,6 +236,19 @@ public class MetaService {
     private void validarFiltro(TipoMeta tipo, String filtro) {
         if (tipo == TipoMeta.LIVROS_COM_PALAVRA_CHAVE && (filtro == null || filtro.isBlank())) {
             throw new BusinessException("filtroValor obrigatorio para meta por palavra-chave");
+        }
+        if (tipo == TipoMeta.GENERO && (filtro == null || filtro.isBlank())) {
+            throw new BusinessException("filtroValor obrigatorio para meta por genero (informe a categoria)");
+        }
+        if (tipo == TipoMeta.LIVRO_ESPECIFICO) {
+            if (filtro == null || filtro.isBlank()) {
+                throw new BusinessException("filtroValor obrigatorio para meta de livro especifico (informe o livroId)");
+            }
+            try {
+                Long.parseLong(filtro.trim());
+            } catch (NumberFormatException e) {
+                throw new BusinessException("filtroValor de meta LIVRO_ESPECIFICO deve ser um livroId numerico");
+            }
         }
     }
 
