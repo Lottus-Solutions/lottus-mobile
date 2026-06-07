@@ -18,6 +18,9 @@ public interface MetaRepository extends JpaRepository<Meta, Long> {
     List<Meta> findByAlunoIdAndStatusAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
             Long alunoId, StatusMeta status, LocalDate inicio, LocalDate fim);
 
+    List<Meta> findByAlunoIdAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
+            Long alunoId, LocalDate inicio, LocalDate fim);
+
     @Modifying
     @Query("UPDATE Meta m SET m.status = :statusArquivada " +
             "WHERE m.criadoPor.id = :usuarioId " +

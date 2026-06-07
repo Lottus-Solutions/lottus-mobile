@@ -2,6 +2,9 @@ package com.br.lottus.mobile.emprestimo.service;
 
 import com.br.lottus.mobile.aluno.entity.Aluno;
 import com.br.lottus.mobile.aluno.repository.AlunoRepository;
+import com.br.lottus.mobile.atividade.entity.TipoAtividade;
+import com.br.lottus.mobile.atividade.entity.TipoReferenciaAtividade;
+import com.br.lottus.mobile.atividade.event.AtividadeRegistradaEvent;
 import com.br.lottus.mobile.common.exception.BusinessException;
 import com.br.lottus.mobile.emprestimo.command.CreateEmprestimoCommand;
 import com.br.lottus.mobile.emprestimo.command.EmprestimoResponse;
@@ -14,6 +17,7 @@ import com.br.lottus.mobile.meta.service.MetaService;
 import com.br.lottus.mobile.usuario.repository.UsuarioAlunoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +40,7 @@ public class EmprestimoService {
     private final LivroRepository livroRepository;
     private final UsuarioAlunoRepository usuarioAlunoRepository;
     private final MetaService metaService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public EmprestimoResponse registrarLeitura(Long usuarioId, String matricula, CreateEmprestimoCommand command) {
@@ -74,6 +79,14 @@ public class EmprestimoService {
         Emprestimo salvo = emprestimoRepository.save(novo);
         log.info("Leitura registrada id={} aluno={} livro={}", salvo.getId(), aluno.getMatricula(), livro.getId());
 
+        eventPublisher.publishEvent(AtividadeRegistradaEvent.agora(
+                aluno.getId(),
+                usuarioId,
+                TipoAtividade.LIVRO_INICIADO,
+                TipoReferenciaAtividade.LIVRO,
+                livro.getId(),
+                "Iniciou a leitura de \"" + livro.getTitulo() + "\""));
+
         return EmprestimoResponse.from(salvo);
     }
 
@@ -100,7 +113,16 @@ public class EmprestimoService {
         Emprestimo salvo = emprestimoRepository.save(emprestimo);
         log.info("Leitura concluida id={} aluno={}", salvo.getId(), aluno.getMatricula());
 
-        metaService.registrarLeituraConcluida(aluno, salvo.getLivro(), salvo.getDataDevolucaoEfetiva());
+        metaService.registrarLeituraConcluida(usuarioId, aluno, salvo.getLivro(), salvo.getDataDevolucaoEfetiva());
+
+        Livro livroConcluido = salvo.getLivro();
+        eventPublisher.publishEvent(AtividadeRegistradaEvent.agora(
+                aluno.getId(),
+                usuarioId,
+                TipoAtividade.LIVRO_CONCLUIDO,
+                TipoReferenciaAtividade.LIVRO,
+                livroConcluido != null ? livroConcluido.getId() : null,
+                "Concluiu a leitura de \"" + (livroConcluido != null ? livroConcluido.getTitulo() : "") + "\""));
 
         return EmprestimoResponse.from(salvo);
     }

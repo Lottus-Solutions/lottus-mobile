@@ -26,6 +26,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
@@ -43,6 +44,7 @@ class MetaServiceTest {
     @Mock private AlunoRepository alunoRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private UsuarioAlunoRepository usuarioAlunoRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private MetaService metaService;
@@ -199,7 +201,7 @@ class MetaServiceTest {
                     any(), any(), any(), any()))
                     .thenReturn(List.of(metaLeitura));
 
-            metaService.registrarLeituraConcluida(alunoMock, new Livro(), LocalDate.now());
+            metaService.registrarLeituraConcluida(USER_ID, alunoMock, new Livro(), LocalDate.now());
 
             assertThat(metaLeitura.getValorAtual()).isEqualTo(2);
             verify(metaRepository).save(metaLeitura);
@@ -222,11 +224,11 @@ class MetaServiceTest {
                     .thenReturn(List.of(metaHarry));
 
             // Livro que não condiz
-            metaService.registrarLeituraConcluida(alunoMock, Livro.builder().titulo("Percy Jackson").build(), LocalDate.now());
+            metaService.registrarLeituraConcluida(USER_ID, alunoMock, Livro.builder().titulo("Percy Jackson").build(), LocalDate.now());
             assertThat(metaHarry.getValorAtual()).isEqualTo(0);
 
             // Livro que condiz
-            metaService.registrarLeituraConcluida(alunoMock, Livro.builder().titulo("Harry Potter e a Pedra").build(), LocalDate.now());
+            metaService.registrarLeituraConcluida(USER_ID, alunoMock, Livro.builder().titulo("Harry Potter e a Pedra").build(), LocalDate.now());
             assertThat(metaHarry.getValorAtual()).isEqualTo(1);
         }
     }

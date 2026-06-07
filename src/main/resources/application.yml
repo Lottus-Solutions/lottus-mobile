@@ -41,9 +41,9 @@ app:
     access-token-expiration: 900000
     refresh-token-expiration: 604800000
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: http://*:8081
   oauth2:
-    redirect-uri: http://localhost:5173/oauth2/callback
+    redirect-uri: http://*:8081/oauth2/callback
 
 springdoc:
   api-docs:
@@ -54,4 +54,5 @@ springdoc:
     tags-sorter: alpha
 
 server:
+  address: 0.0.0.0
   port: 8080

@@ -2,6 +2,9 @@ package com.br.lottus.mobile.meta.service;
 
 import com.br.lottus.mobile.aluno.entity.Aluno;
 import com.br.lottus.mobile.aluno.repository.AlunoRepository;
+import com.br.lottus.mobile.atividade.entity.TipoAtividade;
+import com.br.lottus.mobile.atividade.entity.TipoReferenciaAtividade;
+import com.br.lottus.mobile.atividade.event.AtividadeRegistradaEvent;
 import com.br.lottus.mobile.common.exception.BusinessException;
 import com.br.lottus.mobile.livro.entity.Livro;
 import com.br.lottus.mobile.meta.command.AtualizarProgressoCommand;
@@ -18,6 +21,7 @@ import com.br.lottus.mobile.usuario.repository.UsuarioAlunoRepository;
 import com.br.lottus.mobile.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +39,7 @@ public class MetaService {
     private final AlunoRepository alunoRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioAlunoRepository usuarioAlunoRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public MetaResponse criar(Long usuarioId, String matricula, CreateMetaCommand cmd) {
@@ -63,6 +68,15 @@ public class MetaService {
 
         Meta salva = metaRepository.save(meta);
         log.info("Meta criada id={} aluno={} tipo={}", salva.getId(), aluno.getMatricula(), salva.getTipo());
+
+        eventPublisher.publishEvent(AtividadeRegistradaEvent.agora(
+                aluno.getId(),
+                usuarioId,
+                TipoAtividade.META_CRIADA,
+                TipoReferenciaAtividade.META,
+                salva.getId(),
+                "Nova meta criada: \"" + salva.getTitulo() + "\""));
+
         return MetaResponse.from(salva);
     }
 
@@ -112,8 +126,11 @@ public class MetaService {
         meta.setDataInicio(novoInicio);
         meta.setDataFim(novoFim);
 
-        revalidarStatus(meta);
+        boolean concluiuAgora = revalidarStatus(meta);
         Meta salva = metaRepository.save(meta);
+        if (concluiuAgora) {
+            emitirMetaConcluida(usuarioId, salva);
+        }
         return MetaResponse.from(salva);
     }
 
@@ -134,9 +151,12 @@ public class MetaService {
         }
 
         meta.setValorAtual(valor);
-        revalidarStatus(meta);
+        boolean concluiuAgora = revalidarStatus(meta);
         Meta salva = metaRepository.save(meta);
         log.info("Progresso manual atualizado meta={} valor={}", salva.getId(), salva.getValorAtual());
+        if (concluiuAgora) {
+            emitirMetaConcluida(usuarioId, salva);
+        }
         return MetaResponse.from(salva);
     }
 
@@ -148,7 +168,7 @@ public class MetaService {
     }
 
     @Transactional
-    public void registrarLeituraConcluida(Aluno aluno, Livro livro, LocalDate dataConclusao) {
+    public void registrarLeituraConcluida(Long usuarioId, Aluno aluno, Livro livro, LocalDate dataConclusao) {
         LocalDate referencia = dataConclusao != null ? dataConclusao : LocalDate.now();
 
         List<Meta> candidatas = metaRepository
@@ -166,9 +186,12 @@ public class MetaService {
                 novoValor = meta.getValorAlvo();
             }
             meta.setValorAtual(novoValor);
-            revalidarStatus(meta);
-            metaRepository.save(meta);
-            log.debug("Meta {} atualizada automaticamente para {}/{}", meta.getId(), meta.getValorAtual(), meta.getValorAlvo());
+            boolean concluiuAgora = revalidarStatus(meta);
+            Meta salva = metaRepository.save(meta);
+            log.debug("Meta {} atualizada automaticamente para {}/{}", salva.getId(), salva.getValorAtual(), salva.getValorAlvo());
+            if (concluiuAgora) {
+                emitirMetaConcluida(usuarioId, salva);
+            }
         }
     }
 
@@ -183,14 +206,27 @@ public class MetaService {
         };
     }
 
-    private void revalidarStatus(Meta meta) {
+    private boolean revalidarStatus(Meta meta) {
         if (meta.atingida() && meta.getStatus() != StatusMeta.CONCLUIDA) {
             meta.setStatus(StatusMeta.CONCLUIDA);
             meta.setConcluidaEm(LocalDateTime.now());
-        } else if (!meta.atingida() && meta.getStatus() == StatusMeta.CONCLUIDA) {
+            return true;
+        }
+        if (!meta.atingida() && meta.getStatus() == StatusMeta.CONCLUIDA) {
             meta.setStatus(StatusMeta.ATIVA);
             meta.setConcluidaEm(null);
         }
+        return false;
+    }
+
+    private void emitirMetaConcluida(Long usuarioId, Meta meta) {
+        eventPublisher.publishEvent(AtividadeRegistradaEvent.agora(
+                meta.getAluno() != null ? meta.getAluno().getId() : null,
+                usuarioId,
+                TipoAtividade.META_CONCLUIDA,
+                TipoReferenciaAtividade.META,
+                meta.getId(),
+                "Meta concluida: \"" + meta.getTitulo() + "\""));
     }
 
     private void validarJanela(LocalDate inicio, LocalDate fim) {
