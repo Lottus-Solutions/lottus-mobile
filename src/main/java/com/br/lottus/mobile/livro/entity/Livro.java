@@ -19,10 +19,9 @@ public class Livro {
     @Column(nullable = false)
     private String titulo;
 
-    @Column(nullable = false)
     private String autor;
 
-    @Column(nullable = false, length = 2000)
+    @Column(length = 2000)
     private String sinopse;
 
     private String categoria;

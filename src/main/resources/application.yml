@@ -41,7 +41,7 @@ app:
     access-token-expiration: 900000
     refresh-token-expiration: 604800000
   cors:
-    allowed-origins: http://*:8081
+    allowed-origins: http://*:8081,http://localhost:8081,http://localhost:8082,http://192.168.15.13:8081,http://192.168.15.13:8082
   oauth2:
     redirect-uri: http://*:8081/oauth2/callback
 
