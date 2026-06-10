@@ -201,6 +201,8 @@ class MetaServiceTest {
                     any(), any(), any(), any()))
                     .thenReturn(List.of(metaLeitura));
 
+            when(metaRepository.save(ArgumentMatchers.<Meta>any())).thenAnswer(invocation -> invocation.getArgument(0));
+
             metaService.registrarLeituraConcluida(USER_ID, alunoMock, new Livro(), LocalDate.now());
 
             assertThat(metaLeitura.getValorAtual()).isEqualTo(2);
@@ -222,6 +224,8 @@ class MetaServiceTest {
             when(metaRepository.findByAlunoIdAndStatusAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
                     any(), any(), any(), any()))
                     .thenReturn(List.of(metaHarry));
+
+            when(metaRepository.save(ArgumentMatchers.<Meta>any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             // Livro que não condiz
             metaService.registrarLeituraConcluida(USER_ID, alunoMock, Livro.builder().titulo("Percy Jackson").build(), LocalDate.now());
