@@ -42,4 +42,13 @@ public class LivroController {
         return ResponseEntity.ok(ApiResponse.ok(livroResponse));
     }
 
+    @GetMapping("/isbn/{isbn}")
+    @Operation(summary = "Buscar livro por ISBN")
+    public ResponseEntity<ApiResponse<LivroResponse>> buscarPorIsbn(@PathVariable String isbn) {
+        Livro livro = service.buscarPorIsbn(isbn);
+        LivroResponse livroResponse = LivroResponse.from(livro);
+
+        return ResponseEntity.ok(ApiResponse.ok(livroResponse));
+    }
+
 }

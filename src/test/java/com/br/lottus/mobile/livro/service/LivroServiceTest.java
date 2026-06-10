@@ -4,7 +4,6 @@ import com.br.lottus.mobile.common.exception.BusinessException;
 import com.br.lottus.mobile.livro.command.LivroResponse;
 import com.br.lottus.mobile.livro.entity.Livro;
 import com.br.lottus.mobile.livro.repository.LivroRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
