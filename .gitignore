@@ -32,9 +32,3 @@ build/
 ### VS Code ###
 .vscode/
 
-### Local Test Data ###
-# Migrations com dados fictícios para teste local - não comitar
-src/main/resources/db/migration/V13__insert_dados_ficticio.sql
-src/main/resources/db/migration/V14__atualizar_emprestimos_jan_jun_2026.sql
-src/main/resources/db/migration/V15__corrigir_inconsistencias_alunos.sql
-src/main/resources/db/migration/V16__normalizar_isbn_livros.sql
